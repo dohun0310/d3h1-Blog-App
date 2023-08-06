@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
+import 'package:flutter_html/flutter_html.dart';
 import 'package:html/dom.dart' as dom;
-import 'package:webview_flutter/webview_flutter.dart';
 
 class ArticleList {
   final String img;
@@ -135,6 +135,37 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class ArticlePage extends StatelessWidget {
+  final String link;
+
+  const ArticlePage({Key? key, required this.link}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: FutureBuilder<String>(
+        future: getArticleContent(link),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return const Center(
+              child: Text("Error loading article."),
+            );
+          } else {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(8.0),
+              child: Html(data: snapshot.data ?? "")
+            );
+          }
+        },
+      ),
+    );
+  }
+}
+
+
 Future<List<ArticleList>> getArticleData() async {
   final response = await http.get(Uri.parse('https://blog.d3h1.com'));
   var document = parser.parse(response.body);
@@ -178,22 +209,5 @@ Future<String> getArticleContent(String link) async {
     return contentElement.innerHtml;
   } else {
     throw Exception("Failed to parse the article content");
-  }
-}
-
-class ArticlePage extends StatelessWidget {
-  final String link;
-
-  const ArticlePage({Key? key, required this.link}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(),
-      body: WebView(
-        initialUrl: link,
-        javascriptMode: JavascriptMode.unrestricted,
-      ),
-    );
   }
 }
