@@ -25,213 +25,200 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: homeContent(context),
+      ),
+    );
+  }
+
+  Widget homeContent(BuildContext context) {
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
 
-    return MaterialApp(
-      home: Scaffold(
-        body: FutureBuilder<List<ArticleList>>(
-          future: getArticleData(),
-          builder: (context, snapshot) {
-            return CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  expandedHeight: kToolbarHeight,
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  flexibleSpace: Stack(
-                    children: [
-                      Container(
-                        color: Colors.transparent,
-                      ),
-                      ClipRect(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                          child: AppBar(
-                            backgroundColor: Colors.transparent,
-                            elevation: 0,
-                            title: SvgPicture.asset(
-                              "assets/logo.svg",
-                              height: 32,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (snapshot.connectionState == ConnectionState.waiting)
-                  const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (snapshot.hasError)
-                  SliverFillRemaining(
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.error),
-                            SizedBox(height: 8),
-                            Text(
-                              "블로그를 불러오는데 오류가 발생했어요.",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            Text(
-                              "인터넷에 연결이 되어있지 않거나\n블로그 자체에 문제가 생긴 것일 수 있어요.\n",
-                              style: TextStyle(
-                                fontSize: 14,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            Text(
-                              "인터넷 연결에 문제가 없다면 개발자에게 문의해주세요.",
-                              textAlign: TextAlign.center,
-                            )
-                          ],
-                        ),
-                      ),
-                    )
-                  )
-                else if (isTablet || isLandscape)
-                  _tabletLayout(snapshot.data)
-                else
-                  _mobileLayout(snapshot.data),
-              ],
-            );
-          },
+    return FutureBuilder<List<ArticleList>>(
+      future: getArticleData(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return loadingIndicator();
+        } else if (snapshot.hasError) {
+          return errorWidget();
+        } else {
+          return CustomScrollView(
+            slivers: [
+              blurAppBar(),
+              if (isTablet || isLandscape) 
+                ...tabletLayout(snapshot.data!)
+              else 
+                mobileLayout(snapshot.data!)
+            ],
+          );
+        }
+      },
+    );
+  }
+
+  SliverAppBar blurAppBar() {
+    return SliverAppBar(
+      pinned: true,
+      expandedHeight: kToolbarHeight,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      flexibleSpace: Stack(
+        children: [
+          ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: Container(
+                color: Colors.transparent,
+              ),
+            ),
+          ),
+          AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: SvgPicture.asset(
+              "assets/logo.svg",
+              height: 32,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget loadingIndicator() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  Widget errorWidget() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error),
+            SizedBox(height: 8),
+            Text(
+              "블로그를 불러오는데 오류가 발생했어요.",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              "인터넷 연결에 문제가 있거나\n블로그에 문제가 있을 수 있어요.\n",
+              style: TextStyle(
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              "인터넷 연결에 문제가 없다면 개발자에게 문의해주세요",
+              textAlign: TextAlign.center,
+            )
+          ],
         ),
       ),
     );
   }
 
-  SliverList _mobileLayout(List<ArticleList>? data) {
+  SliverList mobileLayout(List<ArticleList>? data) {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          if (index == 0) {
-            return const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "홈",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            );
-          }
-          var article = data[index - 1];
-          return InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ArticlePage(link: article.link),
-                ),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Image.network(article.img),
-                  const SizedBox(height: 8),
-                  Text(
-                    article.category,
-                    style: const TextStyle(
-                      fontSize: 12,
-                    ),
-                  ),
-                  Text(
-                    article.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    article.description,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-        childCount: data!.length + 1,
+        (context, index) => mobileListItem(context, data, index),
+        childCount: (data?.length ?? 0) + 1,
       ),
     );
   }
 
-  SliverGrid _tabletLayout(List<ArticleList>? data) {
-    return SliverGrid(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+  Widget mobileListItem(BuildContext context, List<ArticleList>? data, int index) {
+    if (index == 0) {
+      return const Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "홈",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+    final article = data![index - 1];
+    return InkWell(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ArticlePage(link: article.link))),
+      child: Container(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Image.network(article.img),
+            const SizedBox(height: 8),
+            Text(article.category, style: const TextStyle(fontSize: 12)),
+            Text(article.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(article.description, style: const TextStyle(fontSize: 14, color: Colors.grey))
+          ],
+        ),
       ),
-      delegate: SliverChildBuilderDelegate(
-        (BuildContext context, int index) {
-          var article = data[index];
-          return InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ArticlePage(link: article.link),
-                ),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Image.network(article.img),
-                  const SizedBox(height: 8),
-                  Text(
-                    article.category,
-                    style: const TextStyle(
-                      fontSize: 12,
-                    ),
-                  ),
-                  Text(
-                    article.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    article.description,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
+    );
+  }
+
+  List<Widget> tabletLayout(List<ArticleList>? data) {
+    return [
+      const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "홈",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          );
-        },
-        childCount: data!.length,
+          ),
+        ),
+      ),
+      SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (BuildContext context, int index) {
+            return tabletListItem(data![index], context);
+          },
+          childCount: data?.length ?? 0,
+        ),
+      )
+    ];
+  }
+  
+  Widget tabletListItem(ArticleList article, BuildContext context) {
+    return InkWell(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ArticlePage(link: article.link))),
+      child: Container(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Image.network(article.img),
+            const SizedBox(height: 8),
+            Text(article.category, style: const TextStyle(fontSize: 12)),
+            Text(article.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(article.description, style: const TextStyle(fontSize: 14, color: Colors.grey))
+          ],
+        ),
       ),
     );
   }
 }
-
 
 class ArticlePage extends StatelessWidget {
   final String link;
@@ -242,127 +229,126 @@ class ArticlePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomScrollView(
-        slivers: <Widget>[
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            expandedHeight: kToolbarHeight,
-            iconTheme: 
-              const IconThemeData(
-                color: Colors.black,
-              ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                children: [
-                  Container(
-                    color: Colors.transparent,
-                  ),
-                  ClipRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                      child: AppBar(
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SliverList(
-            delegate: SliverChildListDelegate(
-              [
-                FutureBuilder<String>(
-                  future: getArticleContent(link),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.error),
-                              SizedBox(height: 8),
-                              Text(
-                                "블로그를 불러오는데 오류가 발생했어요.",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              Text(
-                                "인터넷에 연결이 되어있지 않거나\n블로그 자체에 문제가 생긴 것일 수 있어요.\n",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              Text(
-                                "인터넷 연결에 문제가 없다면 개발자에게 문의해주세요.",
-                                textAlign: TextAlign.center,
-                              )
-                            ],
-                          ),
-                        ),
-                      );
-                    } else {
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Html(data: snapshot.data ?? ""),
-                      );
-                    }
-                  },
-                ),
-              ],
+        slivers: [
+          blurAppBar(),
+          SliverFillRemaining(
+            child: FutureBuilder<String>(
+              future: getArticleContent(link),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return loadingIndicator();
+                } else if (snapshot.hasError) {
+                  return errorWidget();
+                } else {
+                  return articleContent(snapshot.data);
+                }
+              },
             ),
           ),
         ],
       ),
     );
   }
+
+  SliverAppBar blurAppBar() {
+    return SliverAppBar(
+      pinned: true,
+      expandedHeight: kToolbarHeight,
+      iconTheme: const IconThemeData(
+        color: Colors.black,
+      ),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      flexibleSpace: Stack(
+        children: [
+          ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: Container(
+                color: Colors.transparent,
+              ),
+            ),
+          ),
+          AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget loadingIndicator() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  Widget errorWidget() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error),
+            SizedBox(height: 8),
+            Text(
+              "블로그를 불러오는데 오류가 발생했어요.",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              "인터넷 연결에 문제가 있거나\n블로그에 문제가 있을 수 있어요.\n",
+              style: TextStyle(
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              "인터넷 연결에 문제가 없다면 개발자에게 문의해주세요",
+              textAlign: TextAlign.center,
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget articleContent(String? content) {
+    return SingleChildScrollView(
+      child: Html(data: content ?? ""),
+    );
+  }
 }
 
 Future<List<ArticleList>> getArticleData() async {
   final response = await http.get(Uri.parse('https://blog.d3h1.com'));
+
   var document = parser.parse(response.body);
-
   List<dom.Element> articleList = document.querySelectorAll('main article');
+  
   return articleList.map((article) {
-    var img = article.querySelector('img');
-    var category = article.querySelector('.post-category');
-    var title = article.querySelector('.post-title');
-    var description = article.querySelector('.post-description');
-    var link = article.querySelector('a')?.attributes['href'] ?? '';
+    var img = article.querySelector('img')?.attributes['src'];
+    var category = article.querySelector('.post-category')?.text;
+    var title = article.querySelector('.post-title')?.text;
+    var description = article.querySelector('.post-description')?.text;
+    var link = article.querySelector('a')?.attributes['href'];
 
-    if (img != null) {
-      String src = img.attributes['src']!;
-      return ArticleList(
-        'https://blog.d3h1.com$src',
-        category?.text ?? '',
-        title?.text ?? '',
-        description?.text ?? '',
-        'https://blog.d3h1.com$link',
-      );
-    } else {
-      return ArticleList(
-        '',
-        category?.text ?? '',
-        title?.text ?? '',
-        description?.text ?? '',
-        ''
-      );
-    }
+    return ArticleList(
+      img == null ? '' : 'https://blog.d3h1.com$img',
+      category ?? '',
+      title ?? '',
+      description ?? '',
+      link == null ? '' : 'https://blog.d3h1.com$link',
+    );
   }).toList();
 }
 
 Future<String> getArticleContent(String link) async {
   final response = await http.get(Uri.parse(link));
+
   var document = parser.parse(response.body);
   dom.Element? contentElement = document.querySelector('main article');
 
@@ -372,5 +358,6 @@ Future<String> getArticleContent(String link) async {
       imgElement.attributes['src'] = 'https://blog.d3h1.com$src';
     }
   });
+
   return contentElement?.outerHtml ?? '';
 }
