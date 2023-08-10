@@ -130,7 +130,7 @@ class MyApp extends StatelessWidget {
               ),
             );
           }
-          var article = data![index - 1];
+          var article = data[index - 1];
           return InkWell(
             onTap: () {
               Navigator.push(
@@ -184,7 +184,7 @@ class MyApp extends StatelessWidget {
       ),
       delegate: SliverChildBuilderDelegate(
         (BuildContext context, int index) {
-          var article = data![index];
+          var article = data[index];
           return InkWell(
             onTap: () {
               Navigator.push(
