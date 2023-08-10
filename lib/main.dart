@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
 import 'package:flutter_html/flutter_html.dart';
 import 'package:html/dom.dart' as dom;
+import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:ui';
 
 class ArticleList {
   final String img;
@@ -18,87 +20,6 @@ void main() {
   runApp(const MyApp());
 }
 
-// class MyApp extends StatelessWidget {
-//   const MyApp({Key? key}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       home: Scaffold(
-//         appBar: AppBar(title: const Text('d3h1 Blog')),
-//         body: FutureBuilder<List<ArticleList>>(
-//           future: getArticleData(),
-//           
-//             else {
-//                return ListView.builder(
-//                 itemCount: snapshot.data!.length + 1,
-//                 itemBuilder: (context, index) {
-//                   if (index == 0) {
-//                     return const Padding(
-//                       padding: EdgeInsets.all(8.0),
-//                       child: Align(
-//                         alignment: Alignment.centerLeft,
-//                         child: Text(
-//                           "홈",
-//                           style: TextStyle(
-//                             fontSize: 24,
-//                             fontWeight: FontWeight.bold,
-//                           ),
-//                         ),
-//                       ),
-//                     );
-//                   }
-//                   var article = snapshot.data![index - 1];
-//                   return InkWell(
-//                     onTap: () {
-//                       Navigator.push(
-//                         context,
-//                         MaterialPageRoute(
-//                           builder: (context) => ArticlePage(link: article.link),
-//                         ),
-//                       );
-//                     },
-//                     child: Container(
-//                       padding: const EdgeInsets.all(8.0),
-//                       child: Column(
-//                         crossAxisAlignment: CrossAxisAlignment.start,
-//                         children: <Widget>[
-//                           Image.network(article.img),
-//                           const SizedBox(height: 8),
-//                           Text(
-//                             article.category,
-//                             style: const TextStyle(
-//                               fontSize: 12,
-//                             ),
-//                           ),
-//                           Text(
-//                             article.title,
-//                             style: const TextStyle(
-//                               fontSize: 18,
-//                               fontWeight: FontWeight.bold,
-//                             ),
-//                           ),
-//                           Text(
-//                             article.description,
-//                             style: const TextStyle(
-//                               fontSize: 14,
-//                               color: Colors.grey,
-//                             ),
-//                           ),
-//                         ],
-//                       ),
-//                     ),
-//                   );
-//                 },
-//               );
-//             }
-//           },
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -109,7 +30,30 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: const Text('d3h1 Blog')),
+        extendBodyBehindAppBar: true,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Stack(
+            children: [
+              Container(
+                color: Colors.transparent,
+              ),
+              ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                  child: AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    title: SvgPicture.asset(
+                      "assets/logo.svg",
+                      height: 32,
+                    )
+                  ),
+                )
+              ),
+            ],
+          ),
+        ),
         body: FutureBuilder<List<ArticleList>>(
           future: getArticleData(),
           builder: (context, snapshot) {
@@ -311,8 +255,7 @@ class ArticlePage extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          }
-          else if (snapshot.hasError) {
+          } else if (snapshot.hasError) {
             return Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -344,8 +287,7 @@ class ArticlePage extends StatelessWidget {
                 ),
               ),
             );
-          }
-          else {
+          } else {
             return SingleChildScrollView(
               padding: const EdgeInsets.all(8.0),
               child: Html(data: snapshot.data ?? "")
@@ -378,8 +320,7 @@ Future<List<ArticleList>> getArticleData() async {
         description?.text ?? '',
         'https://blog.d3h1.com$link',
       );
-    }
-    else {
+    } else {
       return ArticleList(
         '',
         category?.text ?? '',
