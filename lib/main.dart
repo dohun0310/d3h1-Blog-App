@@ -30,84 +30,91 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       home: Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: Stack(
-            children: [
-              Container(
-                color: Colors.transparent,
-              ),
-              ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                  child: AppBar(
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    title: SvgPicture.asset(
-                      "assets/logo.svg",
-                      height: 32,
-                    )
-                  ),
-                )
-              ),
-            ],
-          ),
-        ),
         body: FutureBuilder<List<ArticleList>>(
           future: getArticleData(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            return CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  expandedHeight: kToolbarHeight,
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  flexibleSpace: Stack(
                     children: [
-                      Icon(Icons.error),
-                      SizedBox(height: 8),
-                      Text(
-                        "블로그를 불러오는데 오류가 발생했어요.",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
+                      Container(
+                        color: Colors.transparent,
                       ),
-                      Text(
-                        "인터넷에 연결이 되어있지 않거나\n블로그 자체에 문제가 생긴 것일 수 있어요.\n",
-                        style: TextStyle(
-                          fontSize: 14,
+                      ClipRect(
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                          child: AppBar(
+                            backgroundColor: Colors.transparent,
+                            elevation: 0,
+                            title: SvgPicture.asset(
+                              "assets/logo.svg",
+                              height: 32,
+                            ),
+                          ),
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                      Text(
-                        "인터넷 연결에 문제가 없다면 개발자에게 문의해주세요.",
-                        textAlign: TextAlign.center,
-                      )
                     ],
                   ),
                 ),
-              );
-            } else {
-              if (isTablet || isLandscape) {
-                return _tabletLayout(snapshot.data);
-              } else {
-                return _mobileLayout(snapshot.data);
-              }
-            }
+                if (snapshot.connectionState == ConnectionState.waiting)
+                  const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (snapshot.hasError)
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error),
+                            SizedBox(height: 8),
+                            Text(
+                              "블로그를 불러오는데 오류가 발생했어요.",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            Text(
+                              "인터넷에 연결이 되어있지 않거나\n블로그 자체에 문제가 생긴 것일 수 있어요.\n",
+                              style: TextStyle(
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            Text(
+                              "인터넷 연결에 문제가 없다면 개발자에게 문의해주세요.",
+                              textAlign: TextAlign.center,
+                            )
+                          ],
+                        ),
+                      ),
+                    )
+                  )
+                else if (isTablet || isLandscape)
+                  _tabletLayout(snapshot.data)
+                else
+                  _mobileLayout(snapshot.data),
+              ],
+            );
           },
         ),
       ),
     );
   }
 
-  Widget _mobileLayout(List<ArticleList>? data) {
-      return ListView.builder(
-        itemCount: data!.length + 1,
-        itemBuilder: (context, index) {
+  SliverList _mobileLayout(List<ArticleList>? data) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
           if (index == 0) {
             return const Padding(
               padding: EdgeInsets.all(8.0),
@@ -123,7 +130,7 @@ class MyApp extends StatelessWidget {
               ),
             );
           }
-          var article = data[index - 1];
+          var article = data![index - 1];
           return InkWell(
             onTap: () {
               Navigator.push(
@@ -165,81 +172,66 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-      );
+        childCount: data!.length + 1,
+      ),
+    );
   }
 
-
-  Widget _tabletLayout(List<ArticleList>? data) {
-    return ListView(
-      children: [
-        const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              "홈",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+  SliverGrid _tabletLayout(List<ArticleList>? data) {
+    return SliverGrid(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          var article = data![index];
+          return InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ArticlePage(link: article.link),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Image.network(article.img),
+                  const SizedBox(height: 8),
+                  Text(
+                    article.category,
+                    style: const TextStyle(
+                      fontSize: 12,
+                    ),
+                  ),
+                  Text(
+                    article.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    article.description,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ),
-        GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-          ),
-          itemCount: data!.length,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemBuilder: (context, index) {
-            var article = data[index];
-            return InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ArticlePage(link: article.link),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Image.network(article.img),
-                    const SizedBox(height: 8),
-                    Text(
-                      article.category,
-                      style: const TextStyle(
-                        fontSize: 12,
-                      ),
-                    ),
-                    Text(
-                      article.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      article.description,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ],
+          );
+        },
+        childCount: data!.length,
+      ),
     );
   }
 }
+
 
 class ArticlePage extends StatelessWidget {
   final String link;
@@ -249,51 +241,88 @@ class ArticlePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      body: FutureBuilder<String>(
-        future: getArticleContent(link),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error),
-                    SizedBox(height: 8),
-                    Text(
-                      "블로그를 불러오는데 오류가 발생했어요.",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      "인터넷에 연결이 되어있지 않거나\n블로그 자체에 문제가 생긴 것일 수 있어요.\n",
-                      style: TextStyle(
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      "인터넷 연결에 문제가 없다면 개발자에게 문의해주세요.",
-                      textAlign: TextAlign.center,
-                    )
-                  ],
-                ),
+      body: CustomScrollView(
+        slivers: <Widget>[
+          SliverAppBar(
+            pinned: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            expandedHeight: kToolbarHeight,
+            iconTheme: 
+              const IconThemeData(
+                color: Colors.black,
               ),
-            );
-          } else {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(8.0),
-              child: Html(data: snapshot.data ?? "")
-            );
-          }
-        },
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                children: [
+                  Container(
+                    color: Colors.transparent,
+                  ),
+                  ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                      child: AppBar(
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildListDelegate(
+              [
+                FutureBuilder<String>(
+                  future: getArticleContent(link),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error),
+                              SizedBox(height: 8),
+                              Text(
+                                "블로그를 불러오는데 오류가 발생했어요.",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              Text(
+                                "인터넷에 연결이 되어있지 않거나\n블로그 자체에 문제가 생긴 것일 수 있어요.\n",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              Text(
+                                "인터넷 연결에 문제가 없다면 개발자에게 문의해주세요.",
+                                textAlign: TextAlign.center,
+                              )
+                            ],
+                          ),
+                        ),
+                      );
+                    } else {
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Html(data: snapshot.data ?? ""),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
