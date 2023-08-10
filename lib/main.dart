@@ -228,52 +228,66 @@ class ArticlePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          blurAppBar(),
-          SliverFillRemaining(
-            child: FutureBuilder<String>(
-              future: getArticleContent(link),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return loadingIndicator();
-                } else if (snapshot.hasError) {
-                  return errorWidget();
-                } else {
-                  return articleContent(snapshot.data);
-                }
-              },
-            ),
+      body: articleContent(context),
+    );
+  }
+
+  Widget articleContent(BuildContext context) {
+    return CustomScrollView(
+      slivers: [
+        blurAppBar(),
+        SliverList(
+          delegate: SliverChildListDelegate(
+            [
+              FutureBuilder<String>(
+                future: getArticleContent(link),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return loadingIndicator();
+                  } else if (snapshot.hasError) {
+                    return errorWidget();
+                  } else {
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Html(data: snapshot.data ?? ""),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   SliverAppBar blurAppBar() {
     return SliverAppBar(
       pinned: true,
-      expandedHeight: kToolbarHeight,
-      iconTheme: const IconThemeData(
-        color: Colors.black,
-      ),
       backgroundColor: Colors.transparent,
       elevation: 0,
-      flexibleSpace: Stack(
-        children: [
-          ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-              child: Container(
-                color: Colors.transparent,
+      expandedHeight: kToolbarHeight,
+      iconTheme: 
+        const IconThemeData(
+          color: Colors.black,
+        ),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          children: [
+            Container(
+              color: Colors.transparent,
+            ),
+            ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                child: AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                ),
               ),
             ),
-          ),
-          AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -283,45 +297,39 @@ class ArticlePage extends StatelessWidget {
   }
 
   Widget errorWidget() {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error),
-            SizedBox(height: 8),
-            Text(
-              "블로그를 불러오는데 오류가 발생했어요.",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+      return Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error),
+              SizedBox(height: 8),
+              Text(
+                "블로그를 불러오는데 오류가 발생했어요.",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            Text(
-              "인터넷 연결에 문제가 있거나\n블로그에 문제가 있을 수 있어요.\n",
-              style: TextStyle(
-                fontSize: 14,
+              Text(
+                "인터넷 연결에 문제가 있거나\n블로그에 문제가 있을 수 있어요.\n",
+                style: TextStyle(
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            Text(
-              "인터넷 연결에 문제가 없다면 개발자에게 문의해주세요",
-              textAlign: TextAlign.center,
-            )
-          ],
+              Text(
+                "인터넷 연결에 문제가 없다면 개발자에게 문의해주세요",
+                textAlign: TextAlign.center,
+              )
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-
-  Widget articleContent(String? content) {
-    return SingleChildScrollView(
-      child: Html(data: content ?? ""),
-    );
-  }
-}
 
 Future<List<ArticleList>> getArticleData() async {
   final response = await http.get(Uri.parse('https://blog.d3h1.com'));
