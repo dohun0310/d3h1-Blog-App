@@ -23,7 +23,7 @@ class ArticlePage extends StatelessWidget {
   Widget articleContent(BuildContext context) {
     return CustomScrollView(
       slivers: [
-        blurAppBar(),
+        articleAppBar(),
         SliverList(
           delegate: SliverChildListDelegate(
             [
@@ -31,9 +31,9 @@ class ArticlePage extends StatelessWidget {
                 future: getArticleContent(link),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return loadingIndicator();
+                    return const LoadingIndicator();
                   } else if (snapshot.hasError) {
-                    return errorWidget();
+                    return const WidgetError();
                   } else {
                     return SingleChildScrollView(
                       padding: const EdgeInsets.all(8.0),
@@ -49,7 +49,7 @@ class ArticlePage extends StatelessWidget {
     );
   }
 
-  SliverAppBar blurAppBar() {
+  SliverAppBar articleAppBar() {
     return SliverAppBar(
       pinned: true,
       backgroundColor: Colors.transparent,

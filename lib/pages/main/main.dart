@@ -16,13 +16,13 @@ Widget homeContent(BuildContext context) {
     future: getArticleData(),
     builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) {
-        return loadingIndicator();
+        return const LoadingIndicator();
       } else if (snapshot.hasError) {
-        return errorWidget();
+        return const WidgetError();
       } else {
         return CustomScrollView(
           slivers: [
-            blurAppBar(),
+            const CustomAppBar(),
             if (isTablet || isLandscape) 
               ...tabletLayout(snapshot.data!)
             else 
