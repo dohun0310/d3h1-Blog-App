@@ -52,9 +52,9 @@ class ArticlePage extends StatelessWidget {
   SliverAppBar articleAppBar() {
     return SliverAppBar(
       pinned: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0x00ffffff),
       elevation: 0,
-      expandedHeight: kToolbarHeight,
+      expandedHeight: 80,
       iconTheme: 
         const IconThemeData(
           color: Colors.black,
@@ -63,13 +63,13 @@ class ArticlePage extends StatelessWidget {
         background: Stack(
           children: [
             Container(
-              color: Colors.transparent,
+              color: const Color(0x00ffffff),
             ),
             ClipRect(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                 child: AppBar(
-                  backgroundColor: Colors.transparent,
+                  backgroundColor: const Color(0x00ffffff),
                   elevation: 0,
                 ),
               ),

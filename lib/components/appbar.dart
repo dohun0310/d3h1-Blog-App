@@ -9,8 +9,7 @@ class CustomAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverAppBar(
       pinned: true,
-      expandedHeight: kToolbarHeight,
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0x00ffffff),
       elevation: 0,
       flexibleSpace: Stack(
         children: [
@@ -23,7 +22,7 @@ class CustomAppBar extends StatelessWidget {
             ),
           ),
           AppBar(
-            backgroundColor: Colors.transparent,
+            backgroundColor: const Color(0x00ffffff),
             elevation: 0,
             title: Row(
               mainAxisAlignment: MainAxisAlignment.start,
