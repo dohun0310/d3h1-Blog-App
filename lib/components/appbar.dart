@@ -25,9 +25,14 @@ class CustomAppBar extends StatelessWidget {
           AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            title: SvgPicture.asset(
-              "assets/logo.svg",
-              height: 32,
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                SvgPicture.asset(
+                  "assets/logo.svg",
+                  height: 32,
+                ),
+              ],
             ),
           ),
         ],
