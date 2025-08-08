@@ -146,9 +146,9 @@ Future<List<ArticleList>> getArticleData() async {
   
   return articleList.map((article) {
     var img = article.querySelector('img')?.attributes['src'];
-    var category = article.querySelector('.post-category')?.text;
-    var title = article.querySelector('.post-title')?.text;
-    var description = article.querySelector('.post-description')?.text;
+    var category = article.querySelector('p[class^="postlist_category"]')?.text;
+    var title = article.querySelector('h1[class^="postlist_title"]')?.text;
+    var description = article.querySelector('p[class^="postlist_description"]')?.text;
     var link = article.querySelector('a')?.attributes['href'];
 
     return ArticleList(
